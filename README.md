@@ -6,7 +6,7 @@
 ![Tailwind](https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwindcss&logoColor=fff)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-**AI Usage Tracker** is a secure, privacy-focused background service and desktop widget. It monitors what applications you use and seamlessly detects network requests to major AI providers (like OpenAI, Anthropic, and Google Gemini). It then calculates how efficiently you integrate AI into your daily workflow, presenting a dynamic color-coded dashboard.
+**AI Usage Tracker** is a secure, privacy-focused background service and desktop widget. It monitors what applications you use and seamlessly detects network requests to major AI providers (like OpenAI, Anthropic, and Google Gemini). It then calculates your AI consumption's environmental footprint, highlighting energy usage and carbon emissions to raise awareness of your planetary impact through a dynamic color-coded dashboard.
 
 Built by **Real Code Ltd**.
 
@@ -15,7 +15,7 @@ Built by **Real Code Ltd**.
 *   **🔒 Complete Privacy**: All tracking data is stored strictly on your local machine using JSON files. No history or usage logs are ever transmitted externally.
 *   **📊 Automatic App Categorization**: Actively polls your foreground window and automatically groups them into intuitive categories (e.g., Development, Web Browser, Office Software).
 *   **🕸️ Passive Network Sniffing**: Uses `Npcap` and Rust to passively monitor port 443 TCP traffic. It identifies Server Name Indicator (SNI) records to known AI domains without an intrusive man-in-the-middle proxy or breaking end-to-end encryption.
-*   **🎨 Dynamic Widget UI**: A modern React/Tailwind frontend widget that grades your AI workload intensity in real-time (Red, Amber, Green).
+*   **🎨 Dynamic Widget UI**: A modern React/Tailwind frontend widget that grades your AI environmental impact in real-time (Green for low impact, Red for high footprint).
 *   **📈 Interactive Reports**: Beautiful, interactive charts powered by Recharts showing your AI API calls mapped against active software categories.
 
 ---

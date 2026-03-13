@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Activity, BrainCircuit, Clock, Zap, Target } from "lucide-react";
+import { Activity, BrainCircuit, Clock, Zap, Leaf } from "lucide-react";
 import "./App.css";
 
 interface AppUsage {
@@ -20,7 +20,7 @@ export default function App() {
   const [usageData, setUsageData] = useState<AppUsage[]>([]);
   const [networkData, setNetworkData] = useState<NetworkCall[]>([]);
   const [loading, setLoading] = useState(true);
-  const [aiPricing, setAiPricing] = useState({ cost_per_call: 0.01 });
+  const [aiImpact, setAiImpact] = useState({ gCO2_per_call: 4.3, wh_per_call: 3.0 });
 
   useEffect(() => {
     async function fetchData() {
@@ -34,11 +34,10 @@ export default function App() {
         setUsageData(usage);
         setNetworkData(net);
 
-        // Simulate remote fetch for pricing/efficiency configuration
+        // Simulate remote fetch for environmental configuration
         try {
-            // Using a mock fetch as requested "remote repository"
             const res = await fetch("https://api.github.com/users/octocat"); // simulate network call
-            if (res.ok) setAiPricing({ cost_per_call: 0.015 });
+            if (res.ok) setAiImpact({ gCO2_per_call: 4.3, wh_per_call: 3.0 });
         } catch (e) {
             console.log("Remote config fetch failed, using defaults.");
         }
@@ -62,20 +61,20 @@ export default function App() {
   // Intensity: AI calls per minute of activity
   const intensity = totalActiveMinutes > 0 ? (totalCalls / totalActiveMinutes) : 0;
   
-  let statusColor = "bg-green-500/20";
-  let textColor = "text-green-500";
-  let statusText = "Optimal AI Usage";
-  let gradientBg = "from-green-950/40 to-black";
+  let statusColor = "bg-red-500/20";
+  let textColor = "text-red-500";
+  let statusText = "High Environmental Impact";
+  let gradientBg = "from-red-950/40 to-black";
 
   if (intensity < 0.2) {
-      statusColor = "bg-red-500/20";
-      textColor = "text-red-500";
-      statusText = "Low AI Integration";
-      gradientBg = "from-red-950/40 to-black";
+      statusColor = "bg-green-500/20";
+      textColor = "text-green-500";
+      statusText = "Low Environmental Impact";
+      gradientBg = "from-green-950/40 to-black";
   } else if (intensity < 0.8) {
       statusColor = "bg-amber-500/20";
       textColor = "text-amber-500";
-      statusText = "Moderate AI Usage";
+      statusText = "Moderate Env. Impact";
       gradientBg = "from-amber-950/40 to-black";
   }
 
@@ -87,7 +86,8 @@ export default function App() {
       ai_calls: networkData.length > i ? 1 : 0 // Simplified distribution for UI
   }));
 
-  const estCost = (totalCalls * aiPricing.cost_per_call).toFixed(2);
+  const estCarbon = (totalCalls * aiImpact.gCO2_per_call).toFixed(1);
+  const estEnergy = (totalCalls * aiImpact.wh_per_call).toFixed(1);
 
   if (loading) {
     return <div className="flex w-full h-screen items-center justify-center bg-gray-950 text-white"><div className="animate-pulse">Loading Tracker...</div></div>;
@@ -118,24 +118,24 @@ export default function App() {
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="bg-white/5 rounded-2xl p-5 border border-white/5 backdrop-blur-sm flex items-center gap-4 hover:bg-white/10 transition-colors">
-          <div className="bg-blue-500/20 p-3 rounded-xl"><Target className="text-blue-400" size={24} /></div>
-          <div>
-            <p className="text-sm text-gray-400 mb-1">Total API Calls</p>
-            <h2 className="text-3xl font-bold">{totalCalls}</h2>
-          </div>
-        </div>
-        <div className="bg-white/5 rounded-2xl p-5 border border-white/5 backdrop-blur-sm flex items-center gap-4 hover:bg-white/10 transition-colors">
           <div className="bg-purple-500/20 p-3 rounded-xl"><Clock className="text-purple-400" size={24} /></div>
           <div>
-            <p className="text-sm text-gray-400 mb-1">Active Time</p>
+            <p className="text-sm text-gray-400 mb-1">Active Time Tracking</p>
             <h2 className="text-3xl font-bold">{Math.floor(totalActiveMinutes)}m</h2>
           </div>
         </div>
         <div className="bg-white/5 rounded-2xl p-5 border border-white/5 backdrop-blur-sm flex items-center gap-4 hover:bg-white/10 transition-colors">
-          <div className="bg-emerald-500/20 p-3 rounded-xl"><Zap className="text-emerald-400" size={24} /></div>
+          <div className="bg-emerald-500/20 p-3 rounded-xl"><Leaf className="text-emerald-400" size={24} /></div>
           <div>
-            <p className="text-sm text-gray-400 mb-1">Est. AI Cost</p>
-            <h2 className="text-3xl font-bold">${estCost}</h2>
+            <p className="text-sm text-gray-400 mb-1">Carbon Footprint</p>
+            <h2 className="text-3xl font-bold">{estCarbon} <span className="text-lg font-normal text-gray-400">gCO₂</span></h2>
+          </div>
+        </div>
+        <div className="bg-white/5 rounded-2xl p-5 border border-white/5 backdrop-blur-sm flex items-center gap-4 hover:bg-white/10 transition-colors">
+          <div className="bg-blue-500/20 p-3 rounded-xl"><Zap className="text-blue-400" size={24} /></div>
+          <div>
+            <p className="text-sm text-gray-400 mb-1">Est. Energy Usage</p>
+            <h2 className="text-3xl font-bold">{estEnergy} <span className="text-lg font-normal text-gray-400">Wh</span></h2>
           </div>
         </div>
       </div>

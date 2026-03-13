@@ -6,14 +6,14 @@ Welcome to the **Real Code Ltd AI Usage Tracker**! This guide will help you inst
 
 ## 1. What Does this App Do?
 
-The AI Usage Tracker is a lightweight background application and desktop widget. It helps you understand how efficiently you integrate AI into your daily workflow. It does this by securely monitoring two things:
+The AI Usage Tracker is a lightweight background application and desktop widget. It helps you understand the environmental impact and energy usage of your AI consumption. It does this by securely monitoring two things:
 1. **The application you are currently using** (e.g., your web browser, design tool, or code editor).
 2. **When your computer communicates with known AI services** (like ChatGPT, Claude, or Gemini).
 
-The widget then calculates your "AI efficiency" and displays a dynamic color status:
-*   🟢 **Green:** Highly efficient/optimal AI usage.
-*   🟡 **Amber:** Moderate AI usage.
-*   🔴 **Red:** Low AI usage or highly inefficient non-AI workflows.
+The widget then calculates your carbon footprint and energy usage, displaying a dynamic color status:
+*   🟢 **Green:** Low Environmental Impact (optimal workflow with minimal AI excess).
+*   🟡 **Amber:** Moderate Environmental Impact.
+*   🔴 **Red:** High Environmental Impact (heavy AI reliance driving up energy consumption).
 
 ---
 
@@ -61,6 +61,7 @@ Here is why you can feel completely confident using the AI Usage Tracker:
 Once running, you can open the widget to view your personalized dashboard:
 *   **Recent Usage Trend:** A graph showing your AI API calls over time.
 *   **App Category Breakdown:** A visual breakdown showing the percentage of time you spend in different types of software (Browsers, Development, Office tools, etc.).
-*   **Estimated Cost:** An approximation of the monetary value of the AI resources you have utilized.
+*   **Carbon Footprint:** An estimation of the gCO2 emitted by your AI queries.
+*   **Estimated Energy Usage:** An approximation of the Watt-hours (Wh) your usage has consumed.
 
 *If you have any questions or encounter issues, please contact the Real Code Ltd IT support team.*
