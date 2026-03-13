@@ -16,11 +16,29 @@ interface NetworkCall {
   timestamp: String,
 }
 
+interface EnvironmentalConfig {
+  base_metrics: {
+    network_api_calls: { gCO2_per_call: number, wh_per_call: number }
+  };
+  category_multipliers: Record<string, { gCO2_per_active_hour: number, wh_per_active_hour: number }>;
+}
+
+const DEFAULT_IMPACT_CONFIG: EnvironmentalConfig = {
+  base_metrics: { network_api_calls: { gCO2_per_call: 4.3, wh_per_call: 3.0 } },
+  category_multipliers: {
+    "Development Environment": { gCO2_per_active_hour: 15.0, wh_per_active_hour: 35.0 },
+    "Web Browser": { gCO2_per_active_hour: 8.0, wh_per_active_hour: 18.0 },
+    "Design Tools": { gCO2_per_active_hour: 22.0, wh_per_active_hour: 45.0 },
+    "Office Software": { gCO2_per_active_hour: 4.0, wh_per_active_hour: 10.0 },
+    "Other": { gCO2_per_active_hour: 5.0, wh_per_active_hour: 12.0 }
+  }
+};
+
 export default function App() {
   const [usageData, setUsageData] = useState<AppUsage[]>([]);
   const [networkData, setNetworkData] = useState<NetworkCall[]>([]);
   const [loading, setLoading] = useState(true);
-  const [aiImpact, setAiImpact] = useState({ gCO2_per_call: 4.3, wh_per_call: 3.0 });
+  const [aiImpact, setAiImpact] = useState<EnvironmentalConfig>(DEFAULT_IMPACT_CONFIG);
 
   useEffect(() => {
     async function fetchData() {
@@ -34,10 +52,10 @@ export default function App() {
         setUsageData(usage);
         setNetworkData(net);
 
-        // Simulate remote fetch for environmental configuration
+        // Simulate remote fetch for environmental configuration payload
         try {
             const res = await fetch("https://api.github.com/users/octocat"); // simulate network call
-            if (res.ok) setAiImpact({ gCO2_per_call: 4.3, wh_per_call: 3.0 });
+            if (res.ok) setAiImpact(DEFAULT_IMPACT_CONFIG); // Normally parse remote JSON here
         } catch (e) {
             console.log("Remote config fetch failed, using defaults.");
         }
@@ -86,8 +104,20 @@ export default function App() {
       ai_calls: networkData.length > i ? 1 : 0 // Simplified distribution for UI
   }));
 
-  const estCarbon = (totalCalls * aiImpact.gCO2_per_call).toFixed(1);
-  const estEnergy = (totalCalls * aiImpact.wh_per_call).toFixed(1);
+  // Calculate environmental totals combining active app time and AI API calls
+  let totalCarbon = totalCalls * aiImpact.base_metrics.network_api_calls.gCO2_per_call;
+  let totalEnergy = totalCalls * aiImpact.base_metrics.network_api_calls.wh_per_call;
+
+  usageData.forEach(u => {
+      // 10s interval = 10 / 3600 hours
+      const fractionHour = 10 / 3600;
+      const metrics = aiImpact.category_multipliers[u.category as string] || aiImpact.category_multipliers["Other"];
+      totalCarbon += (metrics.gCO2_per_active_hour * fractionHour);
+      totalEnergy += (metrics.wh_per_active_hour * fractionHour);
+  });
+
+  const estCarbon = totalCarbon.toFixed(1);
+  const estEnergy = totalEnergy.toFixed(1);
 
   if (loading) {
     return <div className="flex w-full h-screen items-center justify-center bg-gray-950 text-white"><div className="animate-pulse">Loading Tracker...</div></div>;
