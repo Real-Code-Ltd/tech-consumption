@@ -10,7 +10,7 @@ Built securely by **Real Code Ltd**.
 
 The dashboard runs right on your desktop, grading your environmental impact in real-time. It shifts from **Green** (Low Impact) to **Red** (High Impact).
 
-
+![AI Flow Tracker Dashboard](docs/dashboard-mockup.png)
 
 ---
 
