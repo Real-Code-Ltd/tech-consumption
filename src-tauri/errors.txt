@@ -1,0 +1,9 @@
+    Checking tauri-app v0.1.0 (C:\Users\bradm\CascadeProjects\TechConsumption\src-tauri)
+error[E0308]: mismatched types
+  --> src\lib.rs:52:45
+   |
+52 | ...                   app_executable: active_window.process_path,
+   |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `String`, found `PathBuf`
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `tauri-app` (lib) due to 1 previous error
