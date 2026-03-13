@@ -1,76 +1,100 @@
-# Real Code Ltd - AI Usage Tracker
+# Real Code Ltd - AI Environmental Tracker
 
-![Tauri](https://img.shields.io/badge/Tauri-2.0-24c8db?logo=tauri&logoColor=fff)
-![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=000)
-![Rust](https://img.shields.io/badge/Rust-Backend-000000?logo=rust&logoColor=fff)
-![Tailwind](https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwindcss&logoColor=fff)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+**Welcome!** This application is a lightweight, background friendly desktop widget designed to help you understand the environmental impact of your daily computer usage. As artificial intelligence becomes integrated into our workflows, it's important to be aware of the energy and carbon footprint those requests generate.
 
-**AI Usage Tracker** is a secure, privacy-focused background service and desktop widget. It monitors what applications you use and seamlessly detects network requests to major AI providers (like OpenAI, Anthropic, and Google Gemini). It then calculates your AI consumption's environmental footprint, highlighting energy usage and carbon emissions to raise awareness of your planetary impact through a dynamic color-coded dashboard.
-
-Built by **Real Code Ltd**.
-
-## 🌟 Key Features
-
-*   **🔒 Complete Privacy**: All tracking data is stored strictly on your local machine using JSON files. No history or usage logs are ever transmitted externally.
-*   **📊 Automatic App Categorization**: Actively polls your foreground window and automatically groups them into intuitive categories (e.g., Development, Web Browser, Office Software).
-*   **🕸️ Passive Network Sniffing**: Uses `Npcap` and Rust to passively monitor port 443 TCP traffic. It identifies Server Name Indicator (SNI) records to known AI domains without an intrusive man-in-the-middle proxy or breaking end-to-end encryption.
-*   **🎨 Dynamic Widget UI**: A modern React/Tailwind frontend widget that grades your AI environmental impact in real-time (Green for low impact, Red for high footprint).
-*   **📈 Interactive Reports**: Beautiful, interactive charts powered by Recharts showing your AI API calls mapped against active software categories.
+Built securely by **Real Code Ltd**.
 
 ---
 
-## 🚀 Quick Start
+## 🖼️ What it Looks Like
 
-### 1. Prerequisites
-1. **[Npcap](https://npcap.com/)**: Required for Windows OS network packet sniffing. Download and install with default settings.
-2. **[Rust](https://rustup.rs/)**: Required to compile the Tauri backend.
-3. **[Node.js](https://nodejs.org/)**: Required for the frontend environment.
+The dashboard runs right on your desktop, grading your environmental impact in real-time. It shifts from **Green** (Low Impact) to **Red** (High Impact).
 
-### 2. Installation & Development
+![AI Flow Tracker Dashboard](https://raw.githubusercontent.com/Real-Code-Ltd/tech-consumption/main/docs/dashboard-mockup.png)
 
-Clone the repository:
+---
+
+## 🎯 What Does This App Do?
+
+This app silently and securely tracks two things on your computer:
+1. **The application you are currently using** (e.g., your web browser, design tool, or code editor).
+2. **When your computer communicates with known AI services** (like ChatGPT, Claude, or Gemini).
+
+It then automatically categorizes your software to calculate a highly accurate estimate of your carbon footprint (gCO₂) and energy usage (Wh).
+
+### Example: How we Calculate Impact
+We map different types of software to different energy costs. Here is an example of the configuration rulebook the app uses to determine your footprint:
+
+```json
+{
+  "base_metrics": {
+    "network_api_calls": {
+      "gCO2_per_call": 4.3,
+      "wh_per_call": 3.0
+    }
+  },
+  "category_multipliers": {
+    "Development Environment": {
+      "description": "Heavy compute, intensive compiler and indexing CPU bounds.",
+      "gCO2_per_active_hour": 15.0,
+      "wh_per_active_hour": 35.0
+    },
+    "Office Software": {
+      "description": "Light compute, minimal battery impact.",
+      "gCO2_per_active_hour": 4.0,
+      "wh_per_active_hour": 10.0
+    }
+  }
+}
+```
+*In the example above, spending an hour in a Development Environment consumes roughly 3.7x more energy than an hour in standard Office Software.*
+
+---
+
+## 🔒 Your Privacy is Guaranteed
+
+We understand a background tracking app sounds concerning. **This application has been designed with strict privacy guarantees built right in.** 
+
+*   **Total Local Storage:** All data regarding what apps you use and when you access AI is stored **entirely on your own computer**.
+*   **No Spying:** The app **never** sends your private usage history, chat logs, browsing history, or documents to Real Code Ltd.
+*   **Passive Listening:** The app only looks at the outermost "envelope" of your internet traffic (specifically, reading the domain name like `api.openai.com`), not the "letter inside". It cannot read the content of your communications.
+
+---
+
+## 🚀 How to Install and Start Tracking
+
+You do **not** need to be technical to install this! Just follow these two steps:
+
+### Step 1: Install Npcap
+The tracker needs a standard Windows tool called **Npcap** to safely monitor internet traffic envelopes. 
+*   Download the free installer here: [https://npcap.com/](https://npcap.com/)
+*   Run the file and click "Next" through the default options.
+
+### Step 2: Download the Application
+We automatically build the installer for you!
+1. Go to our **[Releases Page](../../releases/latest)**.
+2. Under "Assets", click and download `Real-Code-Ltd-AI-Tracker.msi`.
+3. Double-click the downloaded file to install it. 
+4. **Important:** Because the app needs to monitor your network, Windows may ask you to allow the app to run as an Administrator. Click **Yes**.
+
+The app is now running securely on your desktop!
+
+---
+
+## 👤 For Developers
+
+Want to contribute to the code? Awesome! 
+Check out our [Contributing Guide](CONTRIBUTING.md) and [User Guide](USER_GUIDE.md).
+
 ```bash
+# Clone the repository
 git clone https://github.com/Real-Code-Ltd/tech-consumption.git
-cd tech-consumption
-```
 
-Install frontend dependencies:
-```bash
+# Install dependencies
 npm install
-```
 
-Run the app in development mode:
-```bash
+# Run the app in development mode
 npm run tauri dev
 ```
-> **Note:** Because the app monitors network traffic, Windows may prompt you to allow the background process administrative privileges.
 
-### 3. Build for Production
-
-```bash
-npm run build
-```
-
----
-
-## 🏗️ Architecture
-
-*   **Frontend**: React (TS), Vite, Tailwind CSS v4, Recharts, Lucide React.
-*   **Backend**: Tauri v2, Rust (tokio, active-win-pos-rs, pcap).
-*   **Storage**: Local `app_data_dir` JSON files (`app_usage.jsonl` and `network_calls.jsonl`).
-
----
-
-## 🤝 Community & Support
-
-We welcome contributions! Please review our community guidelines to get started:
-*   [Contributing Guide](CONTRIBUTING.md)
-*   [Code of Conduct](CODE_OF_CONDUCT.md)
-*   [User Guide](USER_GUIDE.md)
-
-If you encounter any issues, please check the [Issue Tracker](https://github.com/Real-Code-Ltd/tech-consumption/issues) or submit a Bug Report.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+📄 **License**: MIT License
