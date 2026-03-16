@@ -41,5 +41,5 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: 'Real Code Ltd AI Tracker ${{ github.ref_name }}'
           releaseBody: 'See the attached Windows Installer (.msi) release.'
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
