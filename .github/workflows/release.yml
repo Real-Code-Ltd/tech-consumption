@@ -28,6 +28,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Download Npcap SDK
+        run: |
+          Invoke-WebRequest -Uri "https://npcap.com/dist/npcap-sdk-1.13.zip" -OutFile "npcap-sdk.zip"
+          Expand-Archive -Path "npcap-sdk.zip" -DestinationPath "src-tauri/npcap-sdk" -Force
+
       - name: Build Tauri App
         uses: tauri-apps/tauri-action@v0
         env:
