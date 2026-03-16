@@ -38,14 +38,14 @@ fn greet(name: &str) -> String {
 fn get_usage_data(app: tauri::AppHandle) -> Result<String, String> {
     let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let log_file = app_dir.join("app_usage.jsonl");
-    std::fs::read_to_string(log_file).unwrap_or_else(|_| "".to_string()).into()
+    Ok(std::fs::read_to_string(log_file).unwrap_or_else(|_| "".to_string()))
 }
 
 #[tauri::command]
 fn get_network_data(app: tauri::AppHandle) -> Result<String, String> {
     let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let net_log_file = app_dir.join("network_calls.jsonl");
-    std::fs::read_to_string(net_log_file).unwrap_or_else(|_| "".to_string()).into()
+    Ok(std::fs::read_to_string(net_log_file).unwrap_or_else(|_| "".to_string()))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
