@@ -12,6 +12,8 @@ jobs:
       matrix:
         platform: [windows-latest]
     runs-on: ${{ matrix.platform }}
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
