@@ -51,7 +51,7 @@ We map different types of software to different energy costs. Here is an example
 *In the example above, spending an hour in a Development Environment consumes roughly 3.7x more energy than an hour in standard Office Software.*
 
 ### Configuring Categories & Application Detection
-The app determines the category of your active software by reading the `categories.json` file automatically generated in your secure local App Data directory (e.g., `C:\Users\YourName\AppData\Local\com.bradm.techenergyusage\categories.json` on Windows).
+The app determines the category of your active software by reading the `categories.json` file automatically generated in your secure local App Data directory (e.g., `C:\Users\YourName\AppData\Local\com.realcodeltd.techenergyusage\categories.json` on Windows).
 
 By default, it categorizes your software by checking the active window's process name and title against these predefined keywords:
 *   **Development Environment:** `code`, `studio`, `idea`, `windsurf`, `antigravity`, `pycharm`, `eclipse`
@@ -67,7 +67,7 @@ By default, it categorizes your software by checking the active window's process
 
 **How to customize your tracking:**
 1. Open the app at least once so it generates the default `categories.json` file.
-2. Navigate to your App Data directory (`%LOCALAPPDATA%\com.bradm.techenergyusage` on Windows).
+2. Navigate to your App Data directory (`%LOCALAPPDATA%\com.realcodeltd.techenergyusage` on Windows).
 3. Open `categories.json` in any text editor.
 4. Add new keywords, adjust the environmental multipliers (`gCO2_per_active_hour`, `wh_per_active_hour`), or define entirely new categories to perfectly match your workflow!
 5. Completely restart the Technical Energy Usage app for the changes to take effect.

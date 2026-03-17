@@ -93,12 +93,21 @@ export default function App() {
   }
 
   // Group chart data
-  const chartData = usageData.slice(-60).map((u, i) => ({
-      index: i,
-      category: u.category,
-      time: new Date(u.timestamp as string).toLocaleTimeString(),
-      ai_calls: networkData.length > i ? 1 : 0 // Simplified distribution for UI
-  }));
+  const slicedUsage = usageData.slice(-60);
+  const chartData = slicedUsage.map((u, i, arr) => {
+      const uTime = new Date(u.timestamp as string).getTime();
+      const nextTime = i < arr.length - 1 ? new Date(arr[i+1].timestamp as string).getTime() : Date.now();
+      
+      const callsInTick = networkData.filter(n => {
+          const nTime = new Date(n.timestamp as string).getTime();
+          return nTime >= uTime && nTime < nextTime;
+      }).length;
+
+      return {
+          time: new Date(u.timestamp as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          ai_calls: callsInTick
+      };
+  });
 
   // Calculate environmental totals combining active app time and AI API calls
   let totalCarbon = totalCalls * aiImpact.base_metrics.network_api_calls.gCO2_per_call;
@@ -210,8 +219,8 @@ export default function App() {
                 const count = usageData.filter(u => u.category === cat).length;
                 const percentage = usageData.length > 0 ? (count / usageData.length) * 100 : 0;
                 
-                // Only show categories that have some activity, or default ones just to not be blank
-                if (percentage === 0 && cat !== 'Development Environment' && cat !== 'Web Browser') return null;
+                // Do not display empty categories!
+                if (percentage === 0) return null;
 
                 return (
                   <div key={cat} className="space-y-2">
