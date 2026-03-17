@@ -1,6 +1,6 @@
 [package]
 name = "tech-energy-usage"
-version = "1.0.7"
+version = "1.0.8"
 description = "Real Code Ltd AI Tracker"
 authors = ["Real Code Ltd"]
 edition = "2021"
