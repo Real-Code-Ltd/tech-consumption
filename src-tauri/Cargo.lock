@@ -4763,24 +4763,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-app"
-version = "1.0.5"
-dependencies = [
- "active-win-pos-rs",
- "chrono",
- "pcap",
- "pnet",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-http",
- "tauri-plugin-opener",
- "tokio",
-]
-
-[[package]]
 name = "tauri-build"
 version = "2.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5040,6 +5022,24 @@ dependencies = [
  "dunce",
  "embed-resource",
  "toml 0.9.12+spec-1.1.0",
+]
+
+[[package]]
+name = "tech-energy-usage"
+version = "1.0.5"
+dependencies = [
+ "active-win-pos-rs",
+ "chrono",
+ "pcap",
+ "pnet",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-http",
+ "tauri-plugin-opener",
+ "tokio",
 ]
 
 [[package]]
