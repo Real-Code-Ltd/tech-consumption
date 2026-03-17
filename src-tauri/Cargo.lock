@@ -5026,7 +5026,7 @@ dependencies = [
 
 [[package]]
 name = "tech-energy-usage"
-version = "1.0.6"
+version = "1.0.7"
 dependencies = [
  "active-win-pos-rs",
  "chrono",
