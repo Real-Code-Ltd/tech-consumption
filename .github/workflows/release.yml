@@ -33,12 +33,14 @@ jobs:
       - name: Download Npcap SDK
         run: |
           Invoke-WebRequest -Uri "https://npcap.com/dist/npcap-sdk-1.13.zip" -OutFile "npcap-sdk.zip"
-          Expand-Archive -Path "npcap-sdk.zip" -DestinationPath "src-tauri/npcap-sdk" -Force
+          Expand-Archive -Path "npcap-sdk.zip" -DestinationPath "C:/npcap-sdk" -Force
 
       - name: Build Tauri App
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LIB: "C:/npcap-sdk/Lib/x64"
+          NPCAP_SDK_PATH: "C:/npcap-sdk"
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Real Code Ltd AI Tracker ${{ github.ref_name }}'
