@@ -1,4 +1,4 @@
-# Real Code Ltd - AI Environmental Tracker
+# Tech energy usage - AI Environmental Tracker
 
 **Welcome!** This application is a lightweight, background friendly desktop widget designed to help you understand the environmental impact of your daily computer usage. As artificial intelligence becomes integrated into our workflows, it's important to be aware of the energy and carbon footprint those requests generate.
 
@@ -21,6 +21,7 @@ This app silently and securely tracks two things on your computer:
 2. **When your computer communicates with known AI services** (like ChatGPT, Claude, or Gemini).
 
 It then automatically categorizes your software to calculate a highly accurate estimate of your carbon footprint (gCO₂) and energy usage (Wh).
+*Note: App categories and impact factors are fully customizable via a local `categories.json` file securely saved in your local App Data directory. See the 'Configuring Categories' section below for details.*
 
 ### Example: How we Calculate Impact
 We map different types of software to different energy costs. Here is an example of the configuration rulebook the app uses to determine your footprint:
@@ -48,6 +49,28 @@ We map different types of software to different energy costs. Here is an example
 }
 ```
 *In the example above, spending an hour in a Development Environment consumes roughly 3.7x more energy than an hour in standard Office Software.*
+
+### Configuring Categories & Application Detection
+The app determines the category of your active software by reading the `categories.json` file automatically generated in your secure local App Data directory (e.g., `C:\Users\YourName\AppData\Local\com.bradm.techenergyusage\categories.json` on Windows).
+
+By default, it categorizes your software by checking the active window's process name and title against these predefined keywords:
+*   **Development Environment:** `code`, `studio`, `idea`, `windsurf`, `antigravity`, `pycharm`, `eclipse`
+*   **Web Browser:** `chrome`, `edge`, `firefox`, `brave`, `safari`
+*   **Office Software:** `word`, `excel`, `powerpoint`, `notes`, `libreoffice`, `notepad`
+*   **Design Tools:** `photoshop`, `illustrator`, `figma`, `blender`
+*   **Communication:** `discord`, `teams`, `slack`, `whatsapp`
+*   **Media Player:** `vlc`, `spotify`, `windows media player`
+*   **Game Client:** `steam`, `epic games`, `battle.net`
+*   **System Utilities:** `task manager`, `file explorer`, `explorer.exe`
+*   **Security:** `windows security`, `malwarebytes`
+*   **Other:** Any application that does not match the above keywords falls into this base category.
+
+**How to customize your tracking:**
+1. Open the app at least once so it generates the default `categories.json` file.
+2. Navigate to your App Data directory (`%LOCALAPPDATA%\com.bradm.techenergyusage` on Windows).
+3. Open `categories.json` in any text editor.
+4. Add new keywords, adjust the environmental multipliers (`gCO2_per_active_hour`, `wh_per_active_hour`), or define entirely new categories to perfectly match your workflow!
+5. Completely restart the Technical Energy Usage app for the changes to take effect.
 
 ---
 

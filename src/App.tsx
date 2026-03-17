@@ -16,22 +16,23 @@ interface NetworkCall {
   timestamp: String,
 }
 
+interface CategoryRule {
+  description: string;
+  gCO2_per_active_hour: number;
+  wh_per_active_hour: number;
+  keywords: string[];
+}
+
 interface EnvironmentalConfig {
   base_metrics: {
     network_api_calls: { gCO2_per_call: number, wh_per_call: number }
   };
-  category_multipliers: Record<string, { gCO2_per_active_hour: number, wh_per_active_hour: number }>;
+  category_rules: Record<string, CategoryRule>;
 }
 
 const DEFAULT_IMPACT_CONFIG: EnvironmentalConfig = {
-  base_metrics: { network_api_calls: { gCO2_per_call: 4.3, wh_per_call: 3.0 } },
-  category_multipliers: {
-    "Development Environment": { gCO2_per_active_hour: 15.0, wh_per_active_hour: 35.0 },
-    "Web Browser": { gCO2_per_active_hour: 8.0, wh_per_active_hour: 18.0 },
-    "Design Tools": { gCO2_per_active_hour: 22.0, wh_per_active_hour: 45.0 },
-    "Office Software": { gCO2_per_active_hour: 4.0, wh_per_active_hour: 10.0 },
-    "Other": { gCO2_per_active_hour: 5.0, wh_per_active_hour: 12.0 }
-  }
+  base_metrics: { network_api_calls: { gCO2_per_call: 0, wh_per_call: 0 } },
+  category_rules: {}
 };
 
 export default function App() {
@@ -45,20 +46,15 @@ export default function App() {
       try {
         const usageRaw: string = await invoke("get_usage_data");
         const netRaw: string = await invoke("get_network_data");
+        const configRaw: string = await invoke("get_config");
         
         const usage = usageRaw.split('\n').filter(l => l.trim()).map(l => JSON.parse(l));
         const net = netRaw.split('\n').filter(l => l.trim()).map(l => JSON.parse(l));
+        const config = JSON.parse(configRaw);
         
         setUsageData(usage);
         setNetworkData(net);
-
-        // Simulate remote fetch for environmental configuration payload
-        try {
-            const res = await fetch("https://api.github.com/users/octocat"); // simulate network call
-            if (res.ok) setAiImpact(DEFAULT_IMPACT_CONFIG); // Normally parse remote JSON here
-        } catch (e) {
-            console.log("Remote config fetch failed, using defaults.");
-        }
+        setAiImpact(config);
       } catch (err) {
         console.error("Failed to fetch local data", err);
       } finally {
@@ -111,9 +107,11 @@ export default function App() {
   usageData.forEach(u => {
       // 10s interval = 10 / 3600 hours
       const fractionHour = 10 / 3600;
-      const metrics = aiImpact.category_multipliers[u.category as string] || aiImpact.category_multipliers["Other"];
-      totalCarbon += (metrics.gCO2_per_active_hour * fractionHour);
-      totalEnergy += (metrics.wh_per_active_hour * fractionHour);
+      const metrics = aiImpact.category_rules[u.category as string] || aiImpact.category_rules["Other"];
+      if (metrics) {
+          totalCarbon += (metrics.gCO2_per_active_hour * fractionHour);
+          totalEnergy += (metrics.wh_per_active_hour * fractionHour);
+      }
   });
 
   const estCarbon = totalCarbon.toFixed(1);
@@ -208,9 +206,13 @@ export default function App() {
           <div className="flex-1 w-full min-h-[300px]">
             {/* Simple simulated category split for UI presentation */}
             <div className="space-y-4">
-              {['Development Environment', 'Web Browser', 'Office Software', 'Design Tools'].map(cat => {
+              {Object.keys(aiImpact.category_rules).map(cat => {
                 const count = usageData.filter(u => u.category === cat).length;
                 const percentage = usageData.length > 0 ? (count / usageData.length) * 100 : 0;
+                
+                // Only show categories that have some activity, or default ones just to not be blank
+                if (percentage === 0 && cat !== 'Development Environment' && cat !== 'Web Browser') return null;
+
                 return (
                   <div key={cat} className="space-y-2">
                     <div className="flex justify-between text-sm">

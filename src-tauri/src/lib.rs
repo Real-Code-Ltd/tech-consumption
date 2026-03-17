@@ -1,6 +1,7 @@
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
+use std::collections::HashMap;
 use std::time::Duration;
 use tauri::Manager;
 use tokio::time;
@@ -14,19 +15,126 @@ struct AppUsage {
     timestamp: String,
 }
 
-fn categorize_app(app_name: &str) -> String {
-    let lower = app_name.to_lowercase();
-    if lower.contains("code") || lower.contains("studio") || lower.contains("idea") {
-        "Development Environment".to_string()
-    } else if lower.contains("chrome") || lower.contains("edge") || lower.contains("firefox") || lower.contains("brave") {
-        "Web Browser".to_string()
-    } else if lower.contains("word") || lower.contains("excel") || lower.contains("powerpoint") || lower.contains("notes") {
-        "Office Software".to_string()
-    } else if lower.contains("photoshop") || lower.contains("illustrator") || lower.contains("figma") {
-        "Design Tools".to_string()
-    } else {
-        "Other".to_string()
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct NetworkApiCalls {
+    #[allow(non_snake_case)]
+    gCO2_per_call: f64,
+    wh_per_call: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct BaseMetrics {
+    network_api_calls: NetworkApiCalls,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct CategoryRule {
+    description: String,
+    #[allow(non_snake_case)]
+    gCO2_per_active_hour: f64,
+    wh_per_active_hour: f64,
+    keywords: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct EnvConfig {
+    base_metrics: BaseMetrics,
+    category_rules: HashMap<String, CategoryRule>,
+}
+
+impl Default for EnvConfig {
+    fn default() -> Self {
+        let mut rules = HashMap::new();
+        rules.insert("Development Environment".to_string(), CategoryRule {
+            description: "Heavy compute, intensive compiler and indexing CPU bounds.".to_string(),
+            gCO2_per_active_hour: 15.0,
+            wh_per_active_hour: 35.0,
+            keywords: vec!["code".to_string(), "studio".to_string(), "idea".to_string(), "windsurf".to_string(), "antigravity".to_string(), "pycharm".to_string(), "eclipse".to_string()],
+        });
+        rules.insert("Web Browser".to_string(), CategoryRule {
+            description: "Moderate compute, network heavy.".to_string(),
+            gCO2_per_active_hour: 8.0,
+            wh_per_active_hour: 18.0,
+            keywords: vec!["chrome".to_string(), "edge".to_string(), "firefox".to_string(), "brave".to_string(), "safari".to_string()],
+        });
+        rules.insert("Design Tools".to_string(), CategoryRule {
+            description: "Heavy GPU compute.".to_string(),
+            gCO2_per_active_hour: 22.0,
+            wh_per_active_hour: 45.0,
+            keywords: vec!["photoshop".to_string(), "illustrator".to_string(), "figma".to_string(), "blender".to_string()],
+        });
+        rules.insert("Office Software".to_string(), CategoryRule {
+            description: "Light compute, minimal battery impact.".to_string(),
+            gCO2_per_active_hour: 4.0,
+            wh_per_active_hour: 10.0,
+            keywords: vec!["word".to_string(), "excel".to_string(), "powerpoint".to_string(), "notes".to_string(), "libreoffice".to_string(), "notepad".to_string()],
+        });
+        rules.insert("Communication".to_string(), CategoryRule {
+            description: "Network streaming and background processing.".to_string(),
+            gCO2_per_active_hour: 6.0,
+            wh_per_active_hour: 15.0,
+            keywords: vec!["discord".to_string(), "teams".to_string(), "slack".to_string(), "whatsapp".to_string()],
+        });
+        rules.insert("Media Player".to_string(), CategoryRule {
+            description: "Audio/Video decoding and streaming.".to_string(),
+            gCO2_per_active_hour: 7.0,
+            wh_per_active_hour: 16.0,
+            keywords: vec!["vlc".to_string(), "spotify".to_string(), "windows media player".to_string()],
+        });
+        rules.insert("Game Client".to_string(), CategoryRule {
+            description: "Background downloading and DRM.".to_string(),
+            gCO2_per_active_hour: 5.0,
+            wh_per_active_hour: 12.0,
+            keywords: vec!["steam".to_string(), "epic games".to_string(), "battle.net".to_string()],
+        });
+        rules.insert("System Utilities".to_string(), CategoryRule {
+            description: "Core OS functions and file management.".to_string(),
+            gCO2_per_active_hour: 2.0,
+            wh_per_active_hour: 5.0,
+            keywords: vec!["task manager".to_string(), "file explorer".to_string(), "explorer.exe".to_string()],
+        });
+        rules.insert("Security".to_string(), CategoryRule {
+            description: "Background scanning and monitoring.".to_string(),
+            gCO2_per_active_hour: 9.0,
+            wh_per_active_hour: 20.0,
+            keywords: vec!["windows security".to_string(), "malwarebytes".to_string()],
+        });
+        rules.insert("Other".to_string(), CategoryRule {
+            description: "Base tracking for unknown software.".to_string(),
+            gCO2_per_active_hour: 5.0,
+            wh_per_active_hour: 12.0,
+            keywords: vec![],
+        });
+        rules.insert("Other".to_string(), CategoryRule {
+            description: "Base tracking for unknown software.".to_string(),
+            gCO2_per_active_hour: 5.0,
+            wh_per_active_hour: 12.0,
+            keywords: vec![],
+        });
+
+        EnvConfig {
+            base_metrics: BaseMetrics {
+                network_api_calls: NetworkApiCalls {
+                    gCO2_per_call: 4.3,
+                    wh_per_call: 3.0,
+                }
+            },
+            category_rules: rules,
+        }
     }
+}
+
+fn categorize_app(app_name: &str, rules: &HashMap<String, CategoryRule>) -> String {
+    let lower = app_name.to_lowercase();
+    for (category, rule) in rules {
+        if category == "Other" { continue; }
+        for keyword in &rule.keywords {
+            if lower.contains(keyword) {
+                return category.clone();
+            }
+        }
+    }
+    "Other".to_string()
 }
 
 #[tauri::command]
@@ -48,6 +156,17 @@ fn get_network_data(app: tauri::AppHandle) -> Result<String, String> {
     Ok(std::fs::read_to_string(net_log_file).unwrap_or_else(|_| "".to_string()))
 }
 
+#[tauri::command]
+fn get_config(app: tauri::AppHandle) -> Result<String, String> {
+    let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let config_file = app_dir.join("categories.json");
+    if config_file.exists() {
+        Ok(std::fs::read_to_string(config_file).unwrap_or_else(|_| "".to_string()))
+    } else {
+        Ok(serde_json::to_string_pretty(&EnvConfig::default()).unwrap())
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -55,6 +174,23 @@ pub fn run() {
             let app_dir = app.path().app_data_dir().unwrap_or_else(|_| PathBuf::from("."));
             let log_dir = app_dir.clone();
             std::fs::create_dir_all(&log_dir).unwrap();
+            
+            let config_file = app_dir.join("categories.json");
+            let mut env_config = EnvConfig::default();
+            
+            if !config_file.exists() {
+                if let Ok(json) = serde_json::to_string_pretty(&env_config) {
+                    let _ = std::fs::write(&config_file, json);
+                }
+            } else {
+                if let Ok(content) = std::fs::read_to_string(&config_file) {
+                    if let Ok(parsed) = serde_json::from_str::<EnvConfig>(&content) {
+                        env_config = parsed;
+                    }
+                }
+            }
+            let rules_for_monitoring = env_config.category_rules.clone();
+
             let log_file = log_dir.join("app_usage.jsonl");
 
             tauri::async_runtime::spawn(async move {
@@ -65,7 +201,7 @@ pub fn run() {
                         let usage = AppUsage {
                             app_executable: active_window.process_path.display().to_string(),
                             app_title: active_window.title,
-                            category: categorize_app(&active_window.app_name),
+                            category: categorize_app(&active_window.app_name, &rules_for_monitoring),
                             timestamp: chrono::Utc::now().to_rfc3339(),
                         };
                         
@@ -120,7 +256,7 @@ pub fn run() {
         })
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, get_usage_data, get_network_data])
+        .invoke_handler(tauri::generate_handler![greet, get_usage_data, get_network_data, get_config])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
