@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Activity, BrainCircuit, Clock, Zap, Leaf, Minus, X, Settings, Pin, Power, Globe, Plus, Trash2, ChevronDown, ChevronUp, Save, CheckCircle } from "lucide-react";
+import { Activity, BrainCircuit, Clock, Zap, Leaf, Minus, X, Settings, Pin, Power, Globe, Plus, Trash2, ChevronDown, ChevronUp, Save, CheckCircle, HelpCircle, Info } from "lucide-react";
 import "./App.css";
 
 // ── Carbon intensity by region (gCO2/kWh from electricity maps) ──────────────
@@ -86,6 +86,7 @@ export default function App() {
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
   const [newKeyword, setNewKeyword] = useState<Record<string, string>>({});
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -266,18 +267,63 @@ export default function App() {
     <main className={`min-h-screen w-full bg-linear-to-br ${gradientBg} text-gray-100 flex flex-col font-sans transition-all duration-1000 ease-in-out rounded-2xl overflow-hidden border border-white/10 shadow-2xl`}>
 
       {/* ── Custom Title Bar ─────────────────────────────────────────────────── */}
-      <div data-tauri-drag-region className="flex items-center justify-between px-4 py-2 bg-black/50 backdrop-blur-md border-b border-white/5 select-none">
-        <div className="flex items-center gap-2">
+      <div
+        className="flex items-center justify-between px-4 py-2 bg-black/50 backdrop-blur-md border-b border-white/5 select-none cursor-grab active:cursor-grabbing"
+        onMouseDown={(e) => {
+          if ((e.target as HTMLElement).closest("button")) return;
+          appWindow.startDragging();
+        }}
+      >
+        <div className="flex items-center gap-2 pointer-events-none">
           <BrainCircuit size={14} className="text-gray-400" />
           <span className="text-xs text-gray-400 font-medium tracking-wide">Tech energy usage</span>
         </div>
         <div className="flex items-center gap-1">
           {alwaysOnTop && <Pin size={11} className="text-blue-400 mr-1" />}
-          <button onClick={() => setShowSettings((s) => !s)} className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors ${showSettings ? "text-blue-400 bg-blue-500/10" : "text-gray-500 hover:text-gray-200 hover:bg-white/10"}`} title="Settings"><Settings size={12} /></button>
+          <button onClick={() => { setShowHelp((h) => !h); setShowSettings(false); }} className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors ${showHelp ? "text-amber-400 bg-amber-500/10" : "text-gray-500 hover:text-gray-200 hover:bg-white/10"}`} title="Help"><HelpCircle size={12} /></button>
+          <button onClick={() => { setShowSettings((s) => !s); setShowHelp(false); }} className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors ${showSettings ? "text-blue-400 bg-blue-500/10" : "text-gray-500 hover:text-gray-200 hover:bg-white/10"}`} title="Settings"><Settings size={12} /></button>
           <button onClick={() => appWindow.minimize()} className="w-7 h-7 flex items-center justify-center rounded-md text-gray-500 hover:text-gray-200 hover:bg-white/10 transition-colors" title="Minimise"><Minus size={12} /></button>
           <button onClick={() => appWindow.hide()} className="w-7 h-7 flex items-center justify-center rounded-md text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors" title="Hide to tray"><X size={12} /></button>
         </div>
       </div>
+
+      {/* ── Help Panel ──────────────────────────────────────────────────────── */}
+      {showHelp && (
+        <div className="bg-black/60 backdrop-blur-xl border-b border-white/5 overflow-y-auto max-h-[70vh]">
+          <div className="p-5 space-y-5">
+            <h2 className="text-sm font-semibold text-white uppercase tracking-widest flex items-center gap-2"><HelpCircle size={14} className="text-amber-400" />How it works</h2>
+
+            <div className="space-y-3 text-sm text-gray-300 leading-relaxed">
+              <p>Tech energy usage runs silently in the background, sampling your <strong className="text-white">active window every 10 seconds</strong>. Each sample is classified into a category (e.g. Development, Web Browser) and the energy cost for that category is accumulated.</p>
+
+              <div className="bg-white/5 rounded-xl p-4 space-y-2 border border-white/5">
+                <p className="text-white font-medium flex items-center gap-2"><Zap size={13} className="text-blue-400" />Energy &amp; carbon figures</p>
+                <p className="text-gray-400 text-xs">Each app category has a <em>Wh per active hour</em> and <em>gCO₂ per active hour</em> value configured in the JSON config file. These are multiplied by your active time in that category. The <strong className="text-white">Carbon Region</strong> setting (in ⚙ Settings) scales the gCO₂ figure based on your local electricity grid intensity — e.g. Norway is much cleaner than India.</p>
+              </div>
+
+              <div className="bg-white/5 rounded-xl p-4 space-y-2 border border-white/5">
+                <p className="text-white font-medium flex items-center gap-2"><Globe size={13} className="text-blue-400" />Global average</p>
+                <p className="text-gray-400 text-xs">The default region is <strong className="text-white">Global average (475 gCO₂/kWh)</strong> — a world-average grid intensity baseline. Change this in Settings to match your actual country for more accurate carbon figures. Choosing a region only scales carbon estimates; energy (Wh) is region-independent.</p>
+              </div>
+
+              <div className="bg-white/5 rounded-xl p-4 space-y-2 border border-white/5">
+                <p className="text-white font-medium flex items-center gap-2"><Activity size={13} className="text-amber-400" />AI / Network calls</p>
+                <p className="text-gray-400 text-xs">The app can detect outbound network calls to AI APIs (e.g. OpenAI, Anthropic). <strong className="text-white">This requires the app to be running as Administrator</strong> on Windows — without elevated privileges, network packet capture is blocked by the OS. If you want AI call tracking: right-click the app shortcut → <em>Run as administrator</em>.</p>
+              </div>
+
+              <div className="bg-white/5 rounded-xl p-4 space-y-2 border border-white/5">
+                <p className="text-white font-medium flex items-center gap-2"><BrainCircuit size={13} className="text-purple-400" />Category keywords</p>
+                <p className="text-gray-400 text-xs">In ⚙ Settings you can add or remove keywords that determine how an app window is classified. If an app is showing as "Other", expand that category and add the app's executable name or window title keyword to the correct category.</p>
+              </div>
+
+              <div className="bg-white/5 rounded-xl p-4 space-y-2 border border-white/5">
+                <p className="text-white font-medium flex items-center gap-2"><Info size={13} className="text-gray-400" />Privacy</p>
+                <p className="text-gray-400 text-xs">All data is stored <strong className="text-white">100% locally</strong> on your machine. No telemetry, no cloud sync, no accounts. The only outbound requests are the AI API calls your apps make — which this tool merely observes.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Settings Panel (slide-in) ────────────────────────────────────────── */}
       {showSettings && (
@@ -394,22 +440,22 @@ export default function App() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white/5 rounded-2xl p-5 border border-white/5 backdrop-blur-sm flex items-center gap-4 hover:bg-white/10 transition-colors">
             <div className="bg-purple-500/20 p-3 rounded-xl"><Clock className="text-purple-400" size={24} /></div>
-            <div><p className="text-sm text-gray-400 mb-1">Active Time</p><h2 className="text-3xl font-bold">{Math.floor(totalActiveMinutes)}m</h2></div>
+            <div><p className="text-sm text-white mb-1">Active Time</p><h2 className="text-3xl font-bold">{Math.floor(totalActiveMinutes)}m</h2></div>
           </div>
           <div className="bg-white/5 rounded-2xl p-5 border border-white/5 backdrop-blur-sm flex items-center gap-4 hover:bg-white/10 transition-colors">
             <div className="bg-emerald-500/20 p-3 rounded-xl"><Leaf className="text-emerald-400" size={24} /></div>
-            <div><p className="text-sm text-gray-400 mb-1">Carbon Footprint</p><h2 className="text-3xl font-bold">{totalCarbon.toFixed(1)} <span className="text-lg font-normal text-gray-400">gCO₂</span></h2></div>
+            <div><p className="text-sm text-white mb-1">Carbon Footprint</p><h2 className="text-3xl font-bold">{totalCarbon.toFixed(1)} <span className="text-lg font-normal text-gray-400">gCO₂</span></h2></div>
           </div>
           <div className="bg-white/5 rounded-2xl p-5 border border-white/5 backdrop-blur-sm flex items-center gap-4 hover:bg-white/10 transition-colors">
             <div className="bg-blue-500/20 p-3 rounded-xl"><Zap className="text-blue-400" size={24} /></div>
-            <div><p className="text-sm text-gray-400 mb-1">Est. Energy</p><h2 className="text-3xl font-bold">{totalEnergy.toFixed(1)} <span className="text-lg font-normal text-gray-400">Wh</span></h2></div>
+            <div><p className="text-sm text-white mb-1">Est. Energy</p><h2 className="text-3xl font-bold">{totalEnergy.toFixed(1)} <span className="text-lg font-normal text-gray-400">Wh</span></h2></div>
           </div>
         </div>
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1">
           <div className="bg-black/40 rounded-3xl p-6 border border-white/5 flex flex-col shadow-2xl">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-300"><Activity size={18} />Active Time by Category</h3>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white"><Activity size={18} />Active Time by Category</h3>
             <div className="flex-1 w-full min-h-[240px]">
               {chartData.length === 0 ? (
                 <div className="flex h-full items-center justify-center text-gray-600 text-sm">Collecting data… check back in a minute.</div>
@@ -450,7 +496,7 @@ export default function App() {
           </div>
 
           <div className="bg-black/40 rounded-3xl p-6 border border-white/5 flex flex-col shadow-2xl">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-300"><BrainCircuit size={18} />App Category Breakdown</h3>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white"><BrainCircuit size={18} />App Category Breakdown</h3>
             <div className="flex-1 w-full min-h-[240px] overflow-y-auto space-y-3">
               {(() => {
                 const maxCount = Math.max(1, ...Object.keys(aiImpact.category_rules).map((cat) => usageData.filter((u) => u.category === cat).length));
@@ -462,9 +508,19 @@ export default function App() {
                   const m = Math.floor((totalSecs % 3600) / 60);
                   const timeLabel = h > 0 ? `${h}h ${m}m` : `${m}m`;
                   const barPct = (count / maxCount) * 100;
+                  const rule = scaledConfig.category_rules[cat] || scaledConfig.category_rules["Other"];
+                  const catWh = rule ? rule.wh_per_active_hour * (totalSecs / 3600) : 0;
+                  const catCO2 = rule ? rule.gCO2_per_active_hour * (totalSecs / 3600) : 0;
                   return (
                     <div key={cat} className="space-y-1">
-                      <div className="flex justify-between text-sm"><span className="text-gray-300">{cat}</span><span className="font-mono text-gray-400">{timeLabel}</span></div>
+                      <div className="flex justify-between text-sm items-baseline">
+                        <span className="text-gray-200">{cat}</span>
+                        <div className="flex items-center gap-2 text-right">
+                          <span className="font-mono text-gray-300">{timeLabel}</span>
+                          <span className="text-xs text-blue-400 font-mono">{catWh.toFixed(2)} Wh</span>
+                          <span className="text-xs text-emerald-400 font-mono">{catCO2.toFixed(1)} gCO₂</span>
+                        </div>
+                      </div>
                       <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden">
                         <div className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${barPct}%` }} />
                       </div>
@@ -476,7 +532,7 @@ export default function App() {
           </div>
         </div>
 
-        <footer className="mt-6 text-center text-xs text-gray-600 font-medium">
+        <footer className="mt-6 text-center text-xs text-gray-400 font-medium">
           &copy; {new Date().getFullYear()} Real Code Ltd. All rights reserved. Strictly local tracking for absolute privacy.
         </footer>
       </div>
