@@ -105,12 +105,6 @@ impl Default for EnvConfig {
             wh_per_active_hour: 12.0,
             keywords: vec![],
         });
-        rules.insert("Other".to_string(), CategoryRule {
-            description: "Base tracking for unknown software.".to_string(),
-            gCO2_per_active_hour: 5.0,
-            wh_per_active_hour: 12.0,
-            keywords: vec![],
-        });
 
         EnvConfig {
             base_metrics: BaseMetrics {
@@ -227,7 +221,10 @@ pub fn run() {
                         while let Ok(packet) = cap.next_packet() {
                             let data = packet.data;
                             // Simple byte search for known AI domains in plaintext (TLS SNI)
-                            let ai_domains = ["api.anthropic.com", "api.openai.com", "gemini.google.com"];
+                            let ai_domains = [
+                                "api.anthropic.com", "api.openai.com", "gemini.google.com",
+                                "claude.ai", "chatgpt.com", "chat.openai.com", "perplexity.ai"
+                            ];
                             for domain in ai_domains {
                                 if data.windows(domain.len()).any(|w| w == domain.as_bytes()) {
                                     #[derive(Serialize)]

@@ -127,7 +127,7 @@ export default function App() {
   const estEnergy = totalEnergy.toFixed(1);
 
   if (loading) {
-    return <div className="flex w-full h-screen items-center justify-center bg-gray-950 text-white"><div className="animate-pulse">Loading Tracker...</div></div>;
+    return <div className="flex w-full h-screen items-center justify-center bg-gray-950 text-white"><div className="animate-pulse">Loading tracking data...</div></div>;
   }
 
   return (
@@ -139,7 +139,7 @@ export default function App() {
             <BrainCircuit className={textColor} size={28} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">AI Flow Tracker</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Tech energy usage</h1>
             <p className="text-sm text-gray-400">by Real Code Ltd</p>
           </div>
         </div>
