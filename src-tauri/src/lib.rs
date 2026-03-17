@@ -322,8 +322,10 @@ pub fn run() {
                 }
             });
 
-            // ── PCAP Network Monitor ────────────────────────────────────────
+            // ── PCAP Network Monitor (Windows only — requires Npcap + admin) ──
+            #[cfg(target_os = "windows")]
             let net_log_file = log_dir.join("network_calls.jsonl");
+            #[cfg(target_os = "windows")]
             std::thread::spawn(move || {
                 let device = match pcap::Device::lookup() {
                     Ok(Some(dev)) => dev,

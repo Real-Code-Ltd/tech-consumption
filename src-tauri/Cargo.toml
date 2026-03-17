@@ -27,5 +27,6 @@ tauri-plugin-http = "2"
 active-win-pos-rs = "0.10.0"
 tokio = { version = "1.50.0", features = ["full"] }
 chrono = "0.4.44"
+[target.'cfg(target_os = "windows")'.dependencies]
 pcap = "2.4.0"
 pnet = "0.35.0"

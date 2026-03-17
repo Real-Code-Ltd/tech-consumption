@@ -1,4 +1,4 @@
-name: Release Windows Installer
+name: Release
 on:
   push:
     tags:
@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-latest]
+        platform: [windows-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     permissions:
       contents: write
@@ -30,12 +30,18 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Download Npcap SDK
+      - name: Download Npcap SDK (Windows only)
+        if: matrix.platform == 'windows-latest'
         run: |
           Invoke-WebRequest -Uri "https://npcap.com/dist/npcap-sdk-1.13.zip" -OutFile "npcap-sdk.zip"
           Expand-Archive -Path "npcap-sdk.zip" -DestinationPath "C:/npcap-sdk" -Force
 
-      - name: Build Tauri App
+      - name: Install libpcap (macOS only)
+        if: matrix.platform == 'macos-latest'
+        run: brew install libpcap
+
+      - name: Build Tauri App (Windows)
+        if: matrix.platform == 'windows-latest'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -44,6 +50,18 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Real Code Ltd AI Tracker ${{ github.ref_name }}'
-          releaseBody: 'See the attached Windows Installer (.msi) release.'
+          releaseBody: 'See the assets below for Windows (.msi) and macOS (.dmg) installers.'
+          releaseDraft: false
+          prerelease: false
+
+      - name: Build Tauri App (macOS)
+        if: matrix.platform == 'macos-latest'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Real Code Ltd AI Tracker ${{ github.ref_name }}'
+          releaseBody: 'See the assets below for Windows (.msi) and macOS (.dmg) installers.'
           releaseDraft: false
           prerelease: false
