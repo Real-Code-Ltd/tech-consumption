@@ -20,16 +20,11 @@
         "minHeight": 600,
         "decorations": false,
         "transparent": true,
-        "visible": false,
+        "visible": true,
         "skipTaskbar": true,
         "shadow": true
       }
     ],
-    "trayIcon": {
-      "iconPath": "icons/32x32.png",
-      "menuOnLeftClick": false,
-      "tooltip": "Tech energy usage"
-    },
     "security": {
       "csp": null
     }

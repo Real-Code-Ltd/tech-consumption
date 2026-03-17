@@ -267,7 +267,7 @@ export default function App() {
 
       {/* ── Custom Title Bar ─────────────────────────────────────────────────── */}
       <div data-tauri-drag-region className="flex items-center justify-between px-4 py-2 bg-black/50 backdrop-blur-md border-b border-white/5 select-none">
-        <div className="flex items-center gap-2 pointer-events-none">
+        <div className="flex items-center gap-2">
           <BrainCircuit size={14} className="text-gray-400" />
           <span className="text-xs text-gray-400 font-medium tracking-wide">Tech energy usage</span>
         </div>
@@ -452,19 +452,26 @@ export default function App() {
           <div className="bg-black/40 rounded-3xl p-6 border border-white/5 flex flex-col shadow-2xl">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-300"><BrainCircuit size={18} />App Category Breakdown</h3>
             <div className="flex-1 w-full min-h-[240px] overflow-y-auto space-y-3">
-              {Object.keys(aiImpact.category_rules).map((cat) => {
-                const count = usageData.filter((u) => u.category === cat).length;
-                const pct = usageData.length > 0 ? (count / usageData.length) * 100 : 0;
-                if (pct === 0) return null;
-                return (
-                  <div key={cat} className="space-y-1">
-                    <div className="flex justify-between text-sm"><span className="text-gray-300">{cat}</span><span className="font-mono text-gray-400">{pct.toFixed(1)}%</span></div>
-                    <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${pct}%` }} />
+              {(() => {
+                const maxCount = Math.max(1, ...Object.keys(aiImpact.category_rules).map((cat) => usageData.filter((u) => u.category === cat).length));
+                return Object.keys(aiImpact.category_rules).map((cat) => {
+                  const count = usageData.filter((u) => u.category === cat).length;
+                  if (count === 0) return null;
+                  const totalSecs = count * 10;
+                  const h = Math.floor(totalSecs / 3600);
+                  const m = Math.floor((totalSecs % 3600) / 60);
+                  const timeLabel = h > 0 ? `${h}h ${m}m` : `${m}m`;
+                  const barPct = (count / maxCount) * 100;
+                  return (
+                    <div key={cat} className="space-y-1">
+                      <div className="flex justify-between text-sm"><span className="text-gray-300">{cat}</span><span className="font-mono text-gray-400">{timeLabel}</span></div>
+                      <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${barPct}%` }} />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>
