@@ -15,7 +15,6 @@
     "@tauri-apps/plugin-http": "^2.5.7",
     "@tauri-apps/plugin-opener": "^2",
     "lucide-react": "^0.577.0",
-    "mysql": "^2.18.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "recharts": "^3.8.0",
