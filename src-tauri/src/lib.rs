@@ -3,7 +3,11 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::collections::HashMap;
 use std::time::Duration;
-use tauri::Manager;
+use tauri::{
+    Manager,
+    menu::{Menu, MenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+};
 use tokio::time;
 use serde::{Deserialize, Serialize};
 
@@ -161,17 +165,121 @@ fn get_config(app: tauri::AppHandle) -> Result<String, String> {
     }
 }
 
+#[tauri::command]
+fn save_config(app: tauri::AppHandle, config_json: String) -> Result<(), String> {
+    let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let config_file = app_dir.join("categories.json");
+    let parsed: serde_json::Value = serde_json::from_str(&config_json).map_err(|e| e.to_string())?;
+    let pretty = serde_json::to_string_pretty(&parsed).map_err(|e| e.to_string())?;
+    std::fs::write(config_file, pretty).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_always_on_top(app: tauri::AppHandle, on_top: bool) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        window.set_always_on_top(on_top).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn get_autostart_status(app: tauri::AppHandle) -> Result<bool, String> {
+    use tauri_plugin_autostart::ManagerExt;
+    app.autolaunch().is_enabled().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    use tauri_plugin_autostart::ManagerExt;
+    let mgr = app.autolaunch();
+    if enabled {
+        mgr.enable().map_err(|e| e.to_string())
+    } else {
+        mgr.disable().map_err(|e| e.to_string())
+    }
+}
+
+#[tauri::command]
+fn show_window(app: tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
+#[tauri::command]
+fn hide_window(app: tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec![]),
+        ))
         .setup(|app| {
             let app_dir = app.path().app_data_dir().unwrap_or_else(|_| PathBuf::from("."));
             let log_dir = app_dir.clone();
             std::fs::create_dir_all(&log_dir).unwrap();
-            
+
+            // ── Build system tray menu ──────────────────────────────────────
+            let open_item = MenuItem::with_id(app, "open", "Open Dashboard", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let tray_menu = Menu::with_items(app, &[&open_item, &quit_item])?;
+
+            let _tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .menu(&tray_menu)
+                .tooltip("Tech energy usage")
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "open" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            if window.is_visible().unwrap_or(false) {
+                                let _ = window.hide();
+                            } else {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                    }
+                })
+                .build(app)?;
+
+            // ── Intercept close → hide to tray ─────────────────────────────
+            let main_window = app.get_webview_window("main").unwrap();
+            main_window.on_window_event(move |event| {
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    let _ = main_window.hide();
+                }
+            });
+
+            // ── Config loading ──────────────────────────────────────────────
             let config_file = app_dir.join("categories.json");
             let mut env_config = EnvConfig::default();
-            
+
             if !config_file.exists() {
                 if let Ok(json) = serde_json::to_string_pretty(&env_config) {
                     let _ = std::fs::write(&config_file, json);
@@ -187,6 +295,7 @@ pub fn run() {
 
             let log_file = log_dir.join("app_usage.jsonl");
 
+            // ── App activity tracker ────────────────────────────────────────
             tauri::async_runtime::spawn(async move {
                 let mut interval = time::interval(Duration::from_secs(10));
                 loop {
@@ -198,7 +307,7 @@ pub fn run() {
                             category: categorize_app(&active_window.app_name, &rules_for_monitoring),
                             timestamp: chrono::Utc::now().to_rfc3339(),
                         };
-                        
+
                         if let Ok(json) = serde_json::to_string(&usage) {
                             if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(&log_file) {
                                 let _ = writeln!(file, "{}", json);
@@ -208,14 +317,14 @@ pub fn run() {
                 }
             });
 
-            // Start PCAP Network Monitor
+            // ── PCAP Network Monitor ────────────────────────────────────────
             let net_log_file = log_dir.join("network_calls.jsonl");
             std::thread::spawn(move || {
                 let device = match pcap::Device::lookup() {
                     Ok(Some(dev)) => dev,
                     _ => return,
                 };
-                
+
                 if let Ok(mut cap) = pcap::Capture::from_device(device).unwrap().promisc(true).snaplen(1500).open() {
                     if cap.filter("tcp port 443", true).is_ok() {
                         while let Ok(packet) = cap.next_packet() {
@@ -253,7 +362,7 @@ pub fn run() {
         })
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, get_usage_data, get_network_data, get_config])
+        .invoke_handler(tauri::generate_handler![greet, get_usage_data, get_network_data, get_config, save_config, set_always_on_top, get_autostart_status, set_autostart, show_window, hide_window])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
